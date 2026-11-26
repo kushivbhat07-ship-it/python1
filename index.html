@@ -1,0 +1,258 @@
+from IPython.display import HTML, display
+import os
+
+html_code = r"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Meeting Action Item Extractor</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 30px;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+h1 {
+    text-align: center;
+    color: #243b53;
+}
+
+.subtitle {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin: 15px 0 8px;
+}
+
+textarea {
+    width: 100%;
+    height: 190px;
+    padding: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 15px;
+    resize: vertical;
+}
+
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+#output {
+    margin-top: 25px;
+}
+
+.result-card {
+    background: #f8fafc;
+    border-left: 5px solid #2563eb;
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 7px;
+}
+
+.result-card h3 {
+    margin-top: 0;
+    color: #1e3a8a;
+}
+
+.error {
+    color: #dc2626;
+}
+
+.note {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Meeting Action Item Extractor</h1>
+
+<p class="subtitle">
+Extract tasks, owners and deadlines from meeting notes
+</p>
+
+<label>Meeting Notes</label>
+
+<textarea id="notes">Website revamp kickoff
+Alex: What are the main features you want on the new landing page?
+Client: We need a modern hero section, customer testimonials, and an integrated booking calendar.
+Alex: Would you prefer Calendly integration or a custom-built solution?
+Client: Calendly works fine and keeps it simple.
+Alex: Perfect, I'll prepare the initial wireframes by Wednesday.</textarea>
+
+<label>Select Extraction Mode</label>
+
+<select id="mode">
+    <option value="offline">Offline Mode</option>
+    <option value="live">Gemini AI Mode (requires backend)</option>
+</select>
+
+<button onclick="extractActions()">
+Extract Action Items
+</button>
+
+<div id="output"></div>
+
+<p class="note">
+Please review extracted action items against the original meeting notes.
+</p>
+
+</div>
+
+<script>
+
+function offlineExtract(notes) {
+
+    let actions = [];
+
+    let pattern = /^([^:\n]+):\s*(.+?)\s+by\s+([^\n.]+)[.]?$/i;
+
+    let lines = notes.split("\n");
+
+    lines.forEach(line => {
+
+        let match = line.trim().match(pattern);
+
+        if (match) {
+
+            actions.push({
+                owner: match[1].trim(),
+                task: match[2].trim(),
+                deadline: match[3].trim()
+            });
+
+        }
+
+    });
+
+    return actions;
+}
+
+
+function extractActions() {
+
+    let notes = document.getElementById("notes").value.trim();
+
+    let mode = document.getElementById("mode").value;
+
+    let output = document.getElementById("output");
+
+    output.innerHTML = "";
+
+    if (!notes) {
+
+        output.innerHTML =
+        '<p class="error">Please enter meeting notes first.</p>';
+
+        return;
+    }
+
+    if (mode === "live") {
+
+        output.innerHTML =
+        '<p class="error">Gemini mode needs a secure Python backend. Please use Offline Mode or connect the backend.</p>';
+
+        return;
+    }
+
+    let actions = offlineExtract(notes);
+
+    if (actions.length === 0) {
+
+        output.innerHTML =
+        "<p>No actions found. Use this format: Name: task by deadline</p>";
+
+        return;
+    }
+
+    output.innerHTML = "<h2>Extracted Action Items</h2>";
+
+    actions.forEach((action, index) => {
+
+        let card = document.createElement("div");
+
+        card.className = "result-card";
+
+        let heading = document.createElement("h3");
+        heading.textContent = (index + 1) + ". " + action.task;
+
+        let owner = document.createElement("p");
+        owner.textContent = "Owner: " + action.owner;
+
+        let deadline = document.createElement("p");
+        deadline.textContent = "Deadline: " + action.deadline;
+
+        card.appendChild(heading);
+        card.appendChild(owner);
+        card.appendChild(deadline);
+
+        output.appendChild(card);
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
+"""
+
+# Save HTML file
+with open("action_extractor.html", "w", encoding="utf-8") as file:
+    file.write(html_code)
+
+print("HTML file created successfully!")
+
+# Display website inside Jupyter
+display(HTML(html_code))
